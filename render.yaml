@@ -1,0 +1,29 @@
+# Render Blueprint for Python Backend
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: apple-music-backend
+    runtime: python
+    region: oregon  # or your preferred region
+    plan: free      # or starter, standard, etc.
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+      # Set these in Render Dashboard as secrets (do NOT put actual values here)
+      - key: APPLE_MUSIC_TEAM_ID
+        sync: false  # Set manually in dashboard
+      - key: APPLE_MUSIC_KEY_ID
+        sync: false
+      - key: APPLE_PRIVATE_KEY
+        sync: false  # Set the .p8 content with \n for newlines
+      - key: MONGODB_URI
+        sync: false
+    healthCheckPath: /
+    autoDeploy: true

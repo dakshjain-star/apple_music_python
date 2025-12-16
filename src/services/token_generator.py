@@ -11,32 +11,47 @@ import jwt
 
 
 class TokenGenerator:
-    def __init__(self, team_id: str, key_id: str, auth_key_path: str):
+    def __init__(self, team_id: str, key_id: str, auth_key_path: str = None, private_key: str = None):
         self.team_id = team_id
         self.key_id = key_id
         self.auth_key_path = auth_key_path
-        self.private_key: Optional[str] = None
+        self._private_key: Optional[str] = private_key  # Can be passed directly from env var
         self.cached_token: Optional[str] = None
         self.token_expiry: Optional[float] = None
 
     def load_private_key(self) -> str:
-        """Load the private key from .p8 file"""
-        if self.private_key:
-            return self.private_key
+        """Load the private key from environment variable or .p8 file"""
+        if self._private_key:
+            return self._private_key
 
-        try:
-            key_path = os.path.abspath(self.auth_key_path)
-            if not os.path.exists(key_path):
-                raise FileNotFoundError(f"AuthKey file not found at: {key_path}")
-            
-            with open(key_path, 'r') as f:
-                self.private_key = f.read()
-            
-            print("✅ Loaded Apple Music private key")
-            return self.private_key
-        except Exception as e:
-            print(f"❌ Error loading private key: {str(e)}")
-            raise
+        # First, try to load from APPLE_PRIVATE_KEY environment variable
+        env_key = os.environ.get("APPLE_PRIVATE_KEY")
+        if env_key:
+            # Handle escaped newlines (from .env files or Render dashboard)
+            self._private_key = env_key.replace("\\n", "\n")
+            print("✅ Loaded Apple Music private key from environment variable")
+            return self._private_key
+
+        # Fall back to file path
+        if self.auth_key_path:
+            try:
+                key_path = os.path.abspath(self.auth_key_path)
+                if not os.path.exists(key_path):
+                    raise FileNotFoundError(f"AuthKey file not found at: {key_path}")
+                
+                with open(key_path, 'r') as f:
+                    self._private_key = f.read()
+                
+                print("✅ Loaded Apple Music private key from file")
+                return self._private_key
+            except Exception as e:
+                print(f"❌ Error loading private key from file: {str(e)}")
+                raise
+
+        raise ValueError(
+            "No private key available. Set APPLE_PRIVATE_KEY environment variable "
+            "or provide auth_key_path to a .p8 file."
+        )
 
     def generate_developer_token(self) -> str:
         """
