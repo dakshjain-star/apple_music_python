@@ -436,9 +436,15 @@ async def get_all_profiles():
         raise HTTPException(status_code=500, detail="Failed to get user profiles")
 
 
-@app.get("/")
+@app.api_route("/health", methods=["GET", "HEAD"])
+async def health_check():
+    """Health check endpoint for deployment platforms"""
+    return {"status": "healthy", "service": "apple-music-python"}
+
+
+@app.api_route("/", methods=["GET", "HEAD"])
 async def serve_index():
-    """Serve the main app"""
+    """Serve the main app (supports HEAD for health checks)"""
     return FileResponse(os.path.join(static_path, "index.html"))
 
 
