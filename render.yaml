@@ -25,5 +25,5 @@ services:
         sync: false  # Set the .p8 content with \n for newlines
       - key: MONGODB_URI
         sync: false
-    healthCheckPath: /
+    healthCheckPath: /health
     autoDeploy: true

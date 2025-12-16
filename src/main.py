@@ -114,10 +114,14 @@ async def lifespan(app: FastAPI):
     await vector_store_service.connect()
     
     print("✅ Application initialized successfully")
-    print(f"📦 Environment: {os.getenv('NODE_ENV', 'development')}")
+    env = os.getenv('NODE_ENV', 'development')
+    print(f"📦 Environment: {env}")
     
-    # Initialize data fetching in background
-    asyncio.create_task(initialize_data_fetching())
+    # Only run auto-sync in development (disabled in production to save memory)
+    if env == 'development':
+        asyncio.create_task(initialize_data_fetching())
+    else:
+        print("⏭️  Skipping auto-sync in production (use /api/sync endpoint instead)")
     
     yield
     
